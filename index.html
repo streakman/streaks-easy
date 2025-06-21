@@ -1,0 +1,18 @@
+<!-- public/index.html -->
+<!DOCTYPE html>
+<html>
+  <head><title>Streaks App</title></head>
+  <body>
+    <h1>🏆 SportStreak</h1>
+    <button onclick="getQuestion()">Get Question</button>
+    <p id="q"></p>
+
+    <script>
+      async function getQuestion() {
+        const res = await fetch('/question');
+        const data = await res.json();
+        document.getElementById('q').innerText = data.question;
+      }
+    </script>
+  </body>
+</html>
