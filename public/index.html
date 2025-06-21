@@ -1,18 +1,39 @@
-<!-- public/index.html -->
 <!DOCTYPE html>
-<html>
-  <head><title>Streaks App</title></head>
-  <body>
-    <h1>🏆 SportStreak</h1>
-    <button onclick="getQuestion()">Get Question</button>
-    <p id="q"></p>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Streaks Game</title>
+</head>
+<body>
+  <h1>Daily Sports Question</h1>
+  <button id="get-question-btn">Get question</button>
+  <p id="question"></p>
 
-    <script>
-      async function getQuestion() {
-        const res = await fetch('/question');
+  <script>
+    const btn = document.getElementById('get-question-btn');
+    const questionEl = document.getElementById('question');
+
+    btn.addEventListener('click', async () => {
+      questionEl.textContent = 'Loading...';
+
+      try {
+        const res = await fetch('/api/question', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({}), // or send data if needed
+        });
+
+        if (!res.ok) throw new Error('Network response not OK');
+
         const data = await res.json();
-        document.getElementById('q').innerText = data.question;
+        questionEl.textContent = data.question || 'No question received.';
+      } catch (err) {
+        questionEl.textContent = 'Error fetching question.';
+        console.error(err);
       }
-    </script>
-  </body>
+    });
+  </script>
+</body>
 </html>
