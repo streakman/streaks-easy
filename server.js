@@ -1,35 +1,39 @@
-// server.js
-import express from "express";
-import dotenv from "dotenv";
-import cors from "cors";
-import { OpenAI } from "openai";
+const express = require('express');
+const fetch = require('node-fetch');
+require('dotenv').config();
 
-dotenv.config();
 const app = express();
-app.use(cors());
+const PORT = process.env.PORT || 3000;
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+app.use(express.static('public'));
+app.use(express.json());
 
-app.get("/question", async (req, res) => {
+app.post('/api/question', async (req, res) => {
   try {
-    const chat = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
-      messages: [
-        {
-          role: "user",
-          content: "Give me one sports prediction question for today’s games. Format it as a yes/no or multiple-choice question.",
-        },
-      ],
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: 'gpt-3.5-turbo',
+        messages: [
+          { role: 'system', content: 'You generate short daily sports prediction questions.' },
+          { role: 'user', content: 'Give me a prediction question.' },
+        ],
+      }),
     });
 
-    res.json({ question: chat.choices[0].message.content.trim() });
-  } catch (err) {
-    console.error(err);
-    res.status(500).send("AI failed");
+    const data = await response.json();
+    const question = data.choices?.[0]?.message?.content || 'No question generated.';
+    res.json({ question });
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({ error: 'Failed to generate question' });
   }
 });
 
-app.use(express.static("public")); // serve frontend
-
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Listening on port ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`Server listening on port ${PORT}`);
+});
