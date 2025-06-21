@@ -12,26 +12,24 @@
   <script>
     const btn = document.getElementById('get-question-btn');
     const questionEl = document.getElementById('question');
-
+    
     btn.addEventListener('click', async () => {
       questionEl.textContent = 'Loading...';
-
+    
       try {
-        const res = await fetch('/api/question', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({}), // or send data if needed
-        });
-
-        if (!res.ok) throw new Error('Network response not OK');
-
+        const res = await fetch('/question', { method: 'POST' });
+    
+        if (!res.ok) {
+          const errorData = await res.json();
+          questionEl.textContent = errorData.error || 'Unknown error occurred';
+          return;
+        }
+    
         const data = await res.json();
         questionEl.textContent = data.question || 'No question received.';
       } catch (err) {
         questionEl.textContent = 'Error fetching question.';
-        console.error(err);
+        console.error('Fetch error:', err);
       }
     });
   </script>
