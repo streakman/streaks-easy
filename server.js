@@ -1,39 +1,39 @@
-const express = require('express');
-const fetch = require('node-fetch');
-require('dotenv').config();
+import express from 'express';
+import { Configuration, OpenAIApi } from 'openai';
 
-const app = express();
-const PORT = process.env.PORT || 3000;
+const router = express.Router();
 
-app.use(express.static('public'));
-app.use(express.json());
+const configuration = new Configuration({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
-app.post('/api/question', async (req, res) => {
+const openai = new OpenAIApi(configuration);
+
+router.post('/question', async (req, res) => {
   try {
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: 'gpt-3.5-turbo',
-        messages: [
-          { role: 'system', content: 'You generate short daily sports prediction questions.' },
-          { role: 'user', content: 'Give me a prediction question.' },
-        ],
-      }),
+    const response = await openai.createChatCompletion({
+      model: 'gpt-4o-mini',
+      messages: [
+        {
+          role: 'system',
+          content: 'You are a helpful assistant that generates one sports trivia question.'
+        },
+      ],
+      max_tokens: 100,
     });
 
-    const data = await response.json();
-    const question = data.choices?.[0]?.message?.content || 'No question generated.';
+    const question = response.data.choices[0].message?.content.trim();
+
+    if (!question) {
+      throw new Error('No question returned from OpenAI');
+    }
+
     res.json({ question });
   } catch (error) {
-    console.error('Error:', error);
-    res.status(500).json({ error: 'Failed to generate question' });
+    console.error('OpenAI API error:', error);
+
+    res.status(500).json({ error: 'AI failed to generate question' });
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`Server listening on port ${PORT}`);
-});
+export default router;
